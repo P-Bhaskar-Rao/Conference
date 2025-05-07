@@ -11,24 +11,28 @@ import React, { useState } from "react";
 
 const MeetingPage = () => {
   const { id } = useParams<{ id: string }>();
-  if (!id) return;
   const { isLoaded, user } = useUser();
-  const { call, isCallLoading } = useGetCallById(id);
+  const { call, isCallLoading } = useGetCallById(id || '');
   const [isSetupComplete, setIsSetupComplete] = useState(false);
-  console.log(isLoaded, isCallLoading);
+
+  if (!id) return null;
   if (!isLoaded || isCallLoading) return <Loading />;
-  if (!call)
+  if (!call) {
     return (
       <p className="text-center text-3xl font-bold text-white">
         Call Not Found
       </p>
     );
+  }
 
   const notAllowed =
     call.type === "invited" &&
     (!user || !call.state.members.find((m) => m.user.id === user.id));
-  if (notAllowed)
+
+  if (notAllowed) {
     return <Alert title="You are not allowed to join this meeting" />;
+  }
+
   return (
     <main className="h-screen w-full">
       <StreamCall call={call}>

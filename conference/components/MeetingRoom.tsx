@@ -22,18 +22,18 @@ import { useUser } from "@clerk/nextjs";
 import Loading from "./Loading";
 
 type CallLayoutType = "grid" | "speaker-left" | "speaker-right";
+
 const MeetingRoom = () => {
   const [layout, setLayout] = useState<CallLayoutType>("speaker-left");
   const [showParticipants, setShowParticipants] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const { user } = useUser();
-  
-  if (!user) return;
   const { useCallCallingState } = useCallStateHooks();
   const callingState = useCallCallingState();
-  if (callingState !== CallingState.JOINED) return <Loading />;
   
+  if (!user) return null;
+  if (callingState !== CallingState.JOINED) return <Loading />;
 
   const CallLayout = () => {
     switch (layout) {
@@ -45,6 +45,7 @@ const MeetingRoom = () => {
         return <SpeakerLayout participantsBarPosition="right" />;
     }
   };
+
   return (
     <section className="relative h-screen w-full overflow-hidden pt-4 text-white">
       <Button
@@ -99,7 +100,10 @@ const MeetingRoom = () => {
                 </DropdownMenuContent>
             </DropdownMenu>
             <CallStatsButton/>
-            <button onClick={()=>setShowParticipants((prev)=>!prev)} >
+            <button 
+              onClick={()=>setShowParticipants((prev)=>!prev)}
+              aria-label="Toggle participants list"
+            >
                 <div className="cursor-pointer rounded-2xl px-4 py-2 bg-[#19232d] hover:bg-">
                     <Users size={20} className="text-white"/>
                 </div>

@@ -13,7 +13,7 @@ import {
 } from "./ui/dialog";
 import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import DatePicker from "react-datepicker";
 import { useUser } from "@clerk/nextjs";
 import Loading from "./Loading";
@@ -26,17 +26,17 @@ const initialValues = {
   link: "",
 };
 
+type MeetingState = "Schedule" | "Instant" | undefined;
+
 const MainMenu = () => {
   const router = useRouter();
-  const {user} = useUser();
+  const { user } = useUser();
   const [values, setValues] = useState(initialValues);
-  const [meetingState, setMeetingState] = useState<
-    "Schedule" | "Instant" | undefined
-  >(undefined);
+  const [meetingState, setMeetingState] = useState<MeetingState>(undefined);
   const client = useStreamVideoClient();
 
-  const createMeeting = async () => {
-    if(!user) return router.push('/login')
+  const createMeeting = useCallback(async () => {
+    if (!user) return router.push('/login');
     if (!client) return router.push("/");
     try {
       if (!values.dateTime) {
@@ -64,37 +64,37 @@ const MainMenu = () => {
         update_members: [{ user_id: user.id }],
       });
 
-      if(meetingState==='Instant'){
-        router.push(`/meeting/${call.id}`)
-        toast('Setting up your meeting',{
-          duration:3000,
-          className:'!bg-gray-300 !rounded-3xl !py-8 !px-5 !justify-center'
-        })
+      if (meetingState === 'Instant') {
+        router.push(`/meeting/${call.id}`);
+        toast('Setting up your meeting', {
+          duration: 3000,
+          className: '!bg-gray-300 !rounded-3xl !py-8 !px-5 !justify-center'
+        });
       }
 
-      if(meetingState==='Schedule'){
-        router.push(`/upcomig`)
-        toast(`Your meeting is scheduled at ${values.dateTime}`,{
-          duration:5000,
-          className:'!bg-gray-300 !rounded-3xl !py-8 !px-5 !justify-center'
-        })
+      if (meetingState === 'Schedule') {
+        router.push(`/upcoming`);
+        toast(`Your meeting is scheduled at ${values.dateTime}`, {
+          duration: 5000,
+          className: '!bg-gray-300 !rounded-3xl !py-8 !px-5 !justify-center'
+        });
       }
-    } catch (err: any) {
-      toast(`Failed to create Meeting ${err.message}`, {
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      toast(`Failed to create Meeting ${errorMessage}`, {
         duration: 3000,
         className: "!bg-gray-300 !rounded-3xl !py-8 !px-5 !justify-center",
       });
     }
-  };
+  }, [client, meetingState, router, user, values.dateTime, values.description]);
 
-  useEffect(()=>{
-    if(meetingState){
+  useEffect(() => {
+    if (meetingState) {
       createMeeting();
     }
-  },[meetingState])
+  }, [meetingState, createMeeting]);
 
-  if (!client || !user) return <Loading/>;
-
+  if (!client || !user) return <Loading />;
 
   return (
     <section className="grid grid-cols-2 gap-3 max-sm:grid-cols-1">

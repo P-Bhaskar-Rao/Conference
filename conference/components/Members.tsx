@@ -10,46 +10,52 @@ type MembersProps = {
     call: Call // Expects a Call object from Stream SDK
 }
 
+interface CallMember {
+    user: {
+        id: string;
+        image?: string;
+    }
+}
+
 // Members component to display meeting participants
 const Members = ({ call }: MembersProps) => {
-    if(!call) return // If no call is provided, return nothing
-    
-    const [callMembers, setCallMembers] = useState<any[]>([]) // State to store call members
-    
+    const [callMembers, setCallMembers] = useState<CallMember[]>([])
+
     useEffect(() => {
         const getMembers = async () => {
-            const members = await call.queryMembers() // Fetching call members
-            setCallMembers(members.members) // Updating state with members
+            if (!call) return;
+            const members = await call.queryMembers()
+            setCallMembers(members.members)
         }
         getMembers()
-    }, []) // Runs once when component mounts
-    
-    // If there are members in the call, render their avatars
-    if(callMembers.length > 0) {
-        return (
-            <div className="relative flex w-full">
-              {callMembers.map((member, index) => {
-                const user = member.user // Extract user details from member object
+    }, [call])
+
+    if (!call) return null;
+    if (callMembers.length === 0) return null;
+
+    return (
+        <div className="relative flex w-full">
+            {callMembers.map((member, index) => {
+                const user = member.user
                 return (
                     <Image
-                      key={user.id} // Unique key for React list rendering
-                      src={user.image} // User avatar image
-                      alt="attendees"
-                      width={40} // Image width
-                      height={40} // Image height
-                      className={cn("rounded-full", { absolute: index > 0 })} // First image is static, others are positioned
-                      style={{ top: 0, left: index * 28 }} // Position images in a stacked manner
+                        key={user.id}
+                        src={user.image || '/assets/avatar.png'}
+                        alt="attendees"
+                        width={40}
+                        height={40}
+                        className={cn("rounded-full", { absolute: index > 0 })}
+                        style={{ top: 0, left: index * 28 }}
                     />
-                  )
-              })}
-              
-              {/* Show the total number of participants */}
-              <div className="flex justify-center items-center absolute left-[136px] size-10 rounded-full border-[5px] border-gray-800 bg-gray-800 text-white shadow-2xl">
+                )
+            })}
+            
+            {/* Show the total number of participants */}
+            <div className="flex justify-center items-center absolute left-[136px] size-10 rounded-full border-[5px] border-gray-800 bg-gray-800 text-white shadow-2xl">
                 {callMembers.length}
-              </div>
             </div>
-        )
-    }
+        </div>
+    )
 }
 
 export default Members
